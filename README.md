@@ -14,7 +14,7 @@ Also adds automatic exponential backoff with default delay of 30 seconds and max
 Add the following to your project's `composer.json`:
 
     "require": {
-    	"deboorn/laravel-resque-ex": "1.0.*"
+    	"deboorn/laravel-resque-ex": "dev-master"
     }
 
 Now you need to run the following to install the package:
