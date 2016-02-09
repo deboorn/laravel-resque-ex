@@ -6,7 +6,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Config;
 use Resque;
 use Resque_Worker;
-use Resque_Log;
+use Resque_Job;
 
 /**
  * Class ResqueQueue
@@ -79,9 +79,7 @@ class ListenCommand extends Command {
 
 		// Launch worker
 		$queues = explode(',', $queue);
-		$logger = new Resque_Log($logLevel);
 		$worker = new Resque_Worker($queues);
-		$worker->setLogger($logger);
 		$worker->logLevel = $logLevel;
 
 		fwrite(STDOUT, '*** Starting worker '.$worker."\n");

@@ -31,6 +31,7 @@ class ResqueServiceProvider extends QueueServiceProvider {
 		$this->registerCommand();
 	}
 
+
 	/**
 	 * Register the Resque queue connector.
 	 *

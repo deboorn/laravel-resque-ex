@@ -6,196 +6,238 @@ use ResqueScheduler;
 use Resque_Event;
 use Resque_Job_Status;
 use Illuminate\Queue\Queue;
+use Illuminate\Contracts\Queue\Queue as QueueContract;
 
 /**
  * Class ResqueQueue
  *
  * @package Resque
  */
-class ResqueQueue extends Queue {
+class ResqueQueue extends Queue implements QueueContract
+{
 
-	/**
-	 * Calls methods on the Resque and ResqueScheduler classes.
-	 *
-	 * @param string $method
-	 * @param array  $parameters
-	 * @return mixed
-	 */
-	public static function __callStatic($method, $parameters)
-	{
-		if (method_exists('Resque', $method))
-		{
-			return call_user_func_array(['Resque', $method], $parameters);
-		}
-		else if (method_exists('ResqueScheduler', $method))
-		{
-			return call_user_func_array(['RescueScheduler', $method], $parameters);
-		}
+    /**
+     * The name of the default queue.
+     *
+     * @var string
+     */
+    protected $default;
 
-		return call_user_func_array(['Queue', $method], $parameters);
-	}
+    /**
+     * Create a new queue instance.
+     *
+     * @param  string  $default
+     * @return void
+     */
+    public function __construct($default = 'default')
+    {
+        $this->default = $default;
+    }
 
-	/**
-	 * Push a new job onto the queue.
-	 *
-	 * @param string $job
-	 * @param array  $data
-	 * @param string $queue
-	 * @param bool   $track
-	 * @return string
-	 */
-	public function push($job, $data = [], $queue = NULL, $track = false)
-	{
-		$queue = (is_null($queue) ? $job : $queue);
+    /**
+     * Calls methods on the Resque and ResqueScheduler classes.
+     *
+     * @param string $method
+     * @param array $parameters
+     * @return mixed
+     */
+    public static function __callStatic($method, $parameters)
+    {
+        if (method_exists('Resque', $method)) {
+            return call_user_func_array(['Resque', $method], $parameters);
+        } else if (method_exists('ResqueScheduler', $method)) {
+            return call_user_func_array(['RescueScheduler', $method], $parameters);
+        }
 
-		return Resque::enqueue($queue, $job, $data, $track);
-	}
+        return call_user_func_array(['Queue', $method], $parameters);
+    }
 
-	/**
-	 * Push the job onto the queue only if the previous one does not exist, is completed, or failed.
-	 *
-	 * @param string $token
-	 * @param string $job
-	 * @param array  $data
-	 * @param null   $queue
-	 * @param bool   $track
-	 * @return bool|string
-	 */
-	public function pushIfNotExists($token, $job, $data = [], $queue = NULL, $track = false)
-	{
-		if (!$this->jobStatus($token) or $this->isComplete($token) or $this->isFailed($token))
-		{
-			return $this->push($job, $data, $queue, $track);
-		}
+    /**
+     * Push a new job onto the queue.
+     *
+     * @param string $job
+     * @param array $data
+     * @param string $queue
+     * @param bool $track
+     * @return string
+     */
+    public function push($job, $data = [], $queue = null, $track = false)
+    {
+        $payload = json_decode($this->createPayload($job, $data), true);
+        return Resque::enqueue($this->getQueue($queue), 'Resque\ResqueJob', $payload, $track);
+    }
 
-		return false;
-	}
+    /**
+     * Create a payload string from the given job and data.
+     *
+     * @param  string $job
+     * @param  mixed $data
+     * @param  string $queue
+     * @return string
+     */
+    protected function createPayload($job, $data = '', $queue = null)
+    {
+        $payload = parent::createPayload($job, $data);
 
-	/**
-	 * Push a new job onto the queue after a delay.
-	 *
-	 * @param int    $delay
-	 * @param string $job
-	 * @param mixed  $data
-	 * @param string $queue
-	 * @return void
-	 * @throws Exception
-	 */
-	public function later($delay, $job, $data = [], $queue = NULL)
-	{
-		if (!class_exists('ResqueScheduler'))
-		{
-			throw new Exception("Please add \"chrisboulton/php-resque-scheduler\": \"dev-master\" to your composer.json and run composer update");
-		}
+        $payload = $this->setMeta($payload, 'id', str_random(32));
 
-		$queue = (is_null($queue) ? $job : $queue);
+        return $this->setMeta($payload, 'attempts', 1);
+    }
 
-		if (is_int($delay))
-		{
-			ResqueScheduler::enqueueIn($delay, $queue, $job, $data);
-		}
-		else
-		{
-			ResqueScheduler::enqueueAt($delay, $queue, $job, $data);
-		}
-	}
+    /**
+     * Push a raw payload onto the queue.
+     *
+     * @param  string $payload
+     * @param  string $queue
+     * @param  array $options
+     * @return mixed
+     */
+    public function pushRaw($payload, $queue = null, array $options = array())
+    {
+        $payload = json_decode($payload, true);
+        return Resque::enqueue($this->getQueue($queue), 'Resque\ResqueJob', $payload, false);
+    }
 
-	/**
-	 * Pop the next job off of the queue.
-	 *
-	 * @param string $queue
-	 * @return \Illuminate\Queue\Jobs\Job|null
-	 */
-	public function pop($queue = NULL)
-	{
-		return Resque::pop($queue);
-	}
+    /**
+     * Push the job onto the queue only if the previous one does not exist, is completed, or failed.
+     *
+     * @param string $token
+     * @param string $job
+     * @param array $data
+     * @param null $queue
+     * @param bool $track
+     * @return bool|string
+     */
+    public function pushIfNotExists($token, $job, $data = [], $queue = null, $track = false)
+    {
+        if (!$this->jobStatus($token) or $this->isComplete($token) or $this->isFailed($token)) {
+            return $this->push($job, $data, $queue, $track);
+        }
 
-	/**
-	 * Register a callback for an event.
-	 *
-	 * @param string $event
-	 * @param object $function
-	 */
-	public function listen($event, $function)
-	{
-		Resque_Event::listen($event, $function);
-	}
+        return false;
+    }
 
-	/**
-	 * Returns the job's status.
-	 *
-	 * @param string $token
-	 * @return int
-	 */
-	public function jobStatus($token)
-	{
-		$status = new Resque_Job_Status($token);
+    /**
+     * Push a new job onto the queue after a delay.
+     *
+     * @param int $delay
+     * @param string $job
+     * @param mixed $data
+     * @param string $queue
+     * @return void
+     * @throws Exception
+     */
+    public function later($delay, $job, $data = [], $queue = null)
+    {
+        if (!class_exists('ResqueScheduler')) {
+            throw new Exception("Please add \"chrisboulton/php-resque-scheduler\": \"dev-master\" to your composer.json and run composer update");
+        }
 
-		return $status->get();
-	}
+        $queue = (is_null($queue) ? $job : $queue);
 
-	/**
-	 * Returns true if the job is in waiting state.
-	 *
-	 * @param string $token
-	 * @return bool
-	 */
-	public function isWaiting($token)
-	{
-		$status = $this->jobStatus($token);
+        if (is_int($delay)) {
+            ResqueScheduler::enqueueIn($delay, $queue, $job, $data);
+        } else {
+            ResqueScheduler::enqueueAt($delay, $queue, $job, $data);
+        }
+    }
 
-		return $status === Resque_Job_Status::STATUS_WAITING;
-	}
+    /**
+     * Pop the next job off of the queue.
+     *
+     * @param string $queue
+     * @return \Illuminate\Queue\Jobs\Job|null
+     */
+    public function pop($queue = null)
+    {
+        return Resque::pop($queue);
+    }
 
-	/**
-	 * Returns true if the job is in running state.
-	 *
-	 * @param string $token
-	 * @return bool
-	 */
-	public function isRunning($token)
-	{
-		$status = $this->jobStatus($token);
+    /**
+     * Register a callback for an event.
+     *
+     * @param string $event
+     * @param object $function
+     */
+    public function listen($event, $function)
+    {
+        Resque_Event::listen($event, $function);
+    }
 
-		return $status === Resque_Job_Status::STATUS_RUNNING;
-	}
+    /**
+     * Returns the job's status.
+     *
+     * @param string $token
+     * @return int
+     */
+    public function jobStatus($token)
+    {
+        $status = new Resque_Job_Status($token);
 
-	/**
-	 * Returns true if the job is in failed state.
-	 *
-	 * @param string $token
-	 * @return bool
-	 */
-	public function isFailed($token)
-	{
-		$status = $this->jobStatus($token);
+        return $status->get();
+    }
 
-		return $status === Resque_Job_Status::STATUS_FAILED;
-	}
+    /**
+     * Returns true if the job is in waiting state.
+     *
+     * @param string $token
+     * @return bool
+     */
+    public function isWaiting($token)
+    {
+        $status = $this->jobStatus($token);
 
-	/**
-	 * Returns true if the job is in complete state.
-	 *
-	 * @param string $token
-	 * @return bool
-	 */
-	public function isComplete($token)
-	{
-		$status = $this->jobStatus($token);
+        return $status === Resque_Job_Status::STATUS_WAITING;
+    }
 
-		return $status === Resque_Job_Status::STATUS_COMPLETE;
-	}
+    /**
+     * Returns true if the job is in running state.
+     *
+     * @param string $token
+     * @return bool
+     */
+    public function isRunning($token)
+    {
+        $status = $this->jobStatus($token);
 
-	/**
-	 * Get the queue or return the default.
-	 *
-	 * @param string|null $queue
-	 * @return string
-	 */
-	protected function getQueue($queue)
-	{
-		return $queue ? : $this->default;
-	}
+        return $status === Resque_Job_Status::STATUS_RUNNING;
+    }
+
+    /**
+     * Returns true if the job is in failed state.
+     *
+     * @param string $token
+     * @return bool
+     */
+    public function isFailed($token)
+    {
+        $status = $this->jobStatus($token);
+
+        return $status === Resque_Job_Status::STATUS_FAILED;
+    }
+
+    /**
+     * Returns true if the job is in complete state.
+     *
+     * @param string $token
+     * @return bool
+     */
+    public function isComplete($token)
+    {
+        $status = $this->jobStatus($token);
+
+        return $status === Resque_Job_Status::STATUS_COMPLETE;
+    }
+
+    /**
+     * Get the queue or return the default.
+     *
+     * @param string|null $queue
+     * @return string
+     */
+    protected function getQueue($queue)
+    {
+        return $queue ?: $this->default;
+    }
 
 } // End ResqueQueue

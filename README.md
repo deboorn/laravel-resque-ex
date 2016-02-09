@@ -2,8 +2,7 @@
 
 This package allows you to connect to Resque when using `Queue`.
 
-This is a fork of awillis13's [laravel-resque](https://github.com/awellis13/laravel-resque) using kamisama's fork of chrisboulton's php-resque.
-
+This is a fork of deedod's [laravel-resque-ex](https://github.com/deedod/laravel-resque-ex) modified to work with [Laravel 5 Command Bus](https://laravel.com/docs/5.0/bus).
 
 
 ## Requirements
@@ -14,7 +13,7 @@ This is a fork of awillis13's [laravel-resque](https://github.com/awellis13/lara
 Add the following to your project's `composer.json`:
 
     "require": {
-    	"deedod/laravel-resque-ex": "1.0.*"
+    	"deboorn/laravel-resque-ex": "1.0.*"
     }
 
 Now you need to run the following to install the package:
@@ -36,25 +35,16 @@ If you wish to use this driver as your default Queue driver you will need to set
     "default" => "resque",
 
 
-## Usage
-
-If you choose to not use this driver as your default Queue driver you can call a Queue method on demand by doing:
-
-    Queue::connection('resque')->push('JobName', ['name' => 'Andrew']);
-
 ### Enqueing a Job
 
-	Queue::push('JobName', ['name' => 'Andrew']);
+Same as [Laravel Command Bus Queued Commands](https://laravel.com/docs/5.0/bus#queued-commands).
 
-### Tracking a Job
+### Starting Resque Listener
 
-	$token = Queue::push('JobName', ['name' => 'Andrew'], true);
-	$status = Queue::getStatus($token);
+Execute `resque:listen` command with comma seperated list of queue names:
 
-### Enqueing a Future Job
-
-	$when = time() + 3600; // 1 hour from now
-	Queue::later($when, 'JobName', ['name' => 'Andrew']);
+    php artisan resque:listen --queue=default
+    
 
 ## Further Documentation
 
