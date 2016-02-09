@@ -1,4 +1,4 @@
-## Laravel Resque
+## Laravel Command Bus Resque Ex
 
 This package allows you to connect to Resque when using `Queue`.
 
