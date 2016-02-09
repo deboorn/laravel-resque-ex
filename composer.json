@@ -1,9 +1,13 @@
 {
-	"name": "deedod/laravel-resque-ex",
-	"description": "Laravel Resque connector for Queue.",
+	"name": "deboorn/laravelcommandbusresqueex",
+	"description": "Laravel Command Bus Resque connector for Queue with Exponential Backoff.",
 	"keywords": ["laravel", "resque", "queue"],
 	"license": "MIT",
 	"authors": [
+		{
+			"name": "Daniel Boorn",
+			"email": "daniel.boorn@gmail.com",
+		},
 		{
 			"name": "Andrew Ellis",
 			"email": "awellis@me.com"
@@ -19,10 +23,8 @@
 	],
 	"require": {
 		"php": ">=5.4.0",
-        	"kamisama/php-resque-ex": "1.*"
-	},
-	"suggest": {
-		"kamisama/php-resque-scheduler": "Enables the use of the ResqueScheduler functionality."
+       	"kamisama/php-resque-ex": "1.*",
+		"kamisama/php-resque-scheduler": "dev-master"
 	},
 	"autoload": {
 		"psr-0": {

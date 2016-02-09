@@ -4,6 +4,7 @@ This package allows you to connect to Resque when using `Queue`.
 
 This is a fork of deedod's [laravel-resque-ex](https://github.com/deedod/laravel-resque-ex) modified to work with [Laravel 5 Command Bus](https://laravel.com/docs/5.0/bus).
 
+Also adds automatic exponential backoff with default delay of 30 seconds and max delay of 2 hours.
 
 ## Requirements
 - PHP 5.4+
