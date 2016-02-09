@@ -23,8 +23,10 @@
 	],
 	"require": {
 		"php": ">=5.4.0",
-       	"kamisama/php-resque-ex": "1.*",
-		"wa0x6e/php-resque-ex-scheduler": "dev-master"
+       	"kamisama/php-resque-ex": "1.*"
+	},
+	"suggest": {
+		"kamisama/php-resque-scheduler": "Enables the use of the ResqueScheduler functionality."
 	},
 	"autoload": {
 		"psr-0": {
