@@ -2,7 +2,7 @@
 
 use Exception;
 use Resque;
-use ResqueScheduler;
+use ResqueScheduler\ResqueScheduler;
 use Resque_Event;
 use Resque_Job_Status;
 use Illuminate\Queue\Queue;
@@ -26,7 +26,7 @@ class ResqueQueue extends Queue implements QueueContract
     /**
      * Create a new queue instance.
      *
-     * @param  string  $default
+     * @param  string $default
      * @return void
      */
     public function __construct($default = 'default')
@@ -129,7 +129,7 @@ class ResqueQueue extends Queue implements QueueContract
      */
     public function later($delay, $job, $data = [], $queue = null)
     {
-        if (!class_exists('ResqueScheduler')) {
+        if (!class_exists('ResqueScheduler\ResqueScheduler')) {
             throw new Exception("Please add \"chrisboulton/php-resque-scheduler\": \"dev-master\" to your composer.json and run composer update");
         }
 
@@ -153,11 +153,13 @@ class ResqueQueue extends Queue implements QueueContract
      */
     public function laterRaw($delay, $payload, $queue = null, array $options = array())
     {
-        if (!class_exists('ResqueScheduler')) {
+        if (!class_exists('ResqueScheduler\ResqueScheduler')) {
             throw new Exception("Please add \"chrisboulton/php-resque-scheduler\": \"dev-master\" to your composer.json and run composer update");
         }
 
+
         $queue = $this->getQueue($queue);
+        $payload = json_decode($payload, true);
 
         if (is_int($delay)) {
             ResqueScheduler::enqueueIn($delay, $queue, 'Resque\ResqueJob', $payload);

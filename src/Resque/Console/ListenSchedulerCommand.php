@@ -1,18 +1,19 @@
 <?php namespace Resque\Console;
 
 use Illuminate\Console\Command;
+use ResqueScheduler\ResqueScheduler;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Config;
 use Resque;
-use Resque_Worker;
+use ResqueScheduler\Worker as Resque_Worker;
 use Resque_Job;
 
 /**
- * Class ListenCommand
+ * Class ListenSchedulerCommand
  * @package Resque\Console
  */
-class ListenCommand extends Command
+class ListenSchedulerCommand extends Command
 {
 
     /**
@@ -20,14 +21,14 @@ class ListenCommand extends Command
      *
      * @var string
      */
-    protected $name = 'resque:listen';
+    protected $name = 'resque:schedulerlisten';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Run a resque worker';
+    protected $description = 'Run a resque scheduler worker';
 
     /**
      * Create a new command instance.
@@ -40,17 +41,10 @@ class ListenCommand extends Command
     }
 
     /**
-     * Execute the console command.
-     *
-     * @return void
+     * Sets the Redis backend from config
      */
-    public function fire()
+    public function setBackend()
     {
-        // Read input
-        $logLevel = $this->input->getOption('verbose') ? true : false;
-        $queue = $this->input->getOption('queue');
-        $interval = $this->input->getOption('interval');
-
         // Configuration
         $config = Config::get('database.redis.default');
 
@@ -72,11 +66,28 @@ class ListenCommand extends Command
 
         // Connect to redis
         Resque::setBackend($config['host'] . ':' . $config['port'], $config['database'], $config['prefix'], (isset($config['password']) ? $config['password'] : null));
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return void
+     */
+    public function fire()
+    {
+        // Read input
+        $logLevel = $this->input->getOption('verbose') ? true : false;
+        $queue = $this->input->getOption('queue');
+        $interval = $this->input->getOption('interval');
+
 
         // Launch worker
         $queues = explode(',', $queue);
         $worker = new Resque_Worker($queues);
         $worker->logLevel = $logLevel;
+
+        // Set backend
+        $this->setBackend();
 
         fwrite(STDOUT, '*** Starting worker ' . $worker . "\n");
         $worker->work($interval);

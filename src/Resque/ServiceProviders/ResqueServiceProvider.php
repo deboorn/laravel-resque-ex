@@ -3,6 +3,7 @@
 use Config;
 use Resque\Connectors\ResqueConnector;
 use Resque\Console\ListenCommand;
+use Resque\Console\ListenSchedulerCommand;
 use Illuminate\Queue\QueueServiceProvider;
 
 /**
@@ -74,6 +75,14 @@ class ResqueServiceProvider extends QueueServiceProvider {
 		});
 
 		$this->commands('command.resque.listen');
+
+		$this->app['command.resque.scheduler.listen'] = $this->app->share(function ($app)
+		{
+			return new ListenSchedulerCommand;
+		});
+
+		$this->commands('command.resque.scheduler.listen');
+
 	}
 
 } // End ResqueServiceProvider

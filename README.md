@@ -47,6 +47,12 @@ Execute `resque:listen` command with comma seperated list of queue names:
     php artisan resque:listen --queue=default
     
 
+### Starting Resque Listener
+
+Execute `resque:schedulerlisten` command with comma seperated list of queue names:
+
+    php artisan resque:schedulerlisten --queue=default
+
 ## Further Documentation
 
 - [PHP-Resque](https://github.com/kamisama/php-resque-ex)
