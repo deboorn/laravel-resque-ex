@@ -26,7 +26,7 @@
        	"kamisama/php-resque-ex": "1.*"
 	},
 	"suggest": {
-		"kamisama/php-resque-scheduler": "Enables the use of the ResqueScheduler functionality."
+		"kamisama/php-resque-ex-scheduler": "Enables the use of the ResqueScheduler functionality."
 	},
 	"autoload": {
 		"psr-0": {
