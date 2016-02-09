@@ -133,12 +133,36 @@ class ResqueQueue extends Queue implements QueueContract
             throw new Exception("Please add \"chrisboulton/php-resque-scheduler\": \"dev-master\" to your composer.json and run composer update");
         }
 
-        $queue = (is_null($queue) ? $job : $queue);
+        $queue = $this->getQueue($queue);
+        $payload = json_decode($this->createPayload($job, $data), true);
 
         if (is_int($delay)) {
-            ResqueScheduler::enqueueIn($delay, $queue, $job, $data);
+            ResqueScheduler::enqueueIn($delay, $queue, 'Resque\ResqueJob', $payload);
         } else {
-            ResqueScheduler::enqueueAt($delay, $queue, $job, $data);
+            ResqueScheduler::enqueueAt($delay, $queue, 'Resque\ResqueJob', $payload);
+        }
+    }
+
+    /**
+     * Push a raw payload onto the queue after a delay
+     *
+     * @param  string $payload
+     * @param  string $queue
+     * @param  array $options
+     * @return mixed
+     */
+    public function laterRaw($delay, $payload, $queue = null, array $options = array())
+    {
+        if (!class_exists('ResqueScheduler')) {
+            throw new Exception("Please add \"chrisboulton/php-resque-scheduler\": \"dev-master\" to your composer.json and run composer update");
+        }
+
+        $queue = $this->getQueue($queue);
+
+        if (is_int($delay)) {
+            ResqueScheduler::enqueueIn($delay, $queue, 'Resque\ResqueJob', $payload);
+        } else {
+            ResqueScheduler::enqueueAt($delay, $queue, 'Resque\ResqueJob', $payload);
         }
     }
 
