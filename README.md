@@ -55,11 +55,11 @@ Execute `resque:schedulerlisten` command with comma seperated list of queue name
 
     $ php artisan resque:schedulerlisten --queue=default
 
-## Further Documentation
+### Further Documentation
 ---
 - [PHP-Resque](https://github.com/kamisama/php-resque-ex)
 - [PHP-Resque-Scheduler](https://github.com/kamisama/php-resque-ex-scheduler)
 
-## License
+### License
 ---
 Laravel Resque is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
