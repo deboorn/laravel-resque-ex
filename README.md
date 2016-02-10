@@ -6,12 +6,12 @@ This is a fork of deedod's [laravel-resque-ex](https://github.com/deedod/laravel
 
 Also adds automatic exponential backoff with default delay of 30 seconds and max delay of 2 hours.
 
-## Requirements
+### Requirements
 ---
 - PHP 5.4+
 - Laravel 5.0
 
-## Installation
+### Installation
 ---
 Add the following to your project's `composer.json`:
 
